@@ -1,0 +1,57 @@
+// .devcontainer/devcontainer.json
+{
+    "name": "depman-site",
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+    "features": {
+        "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {
+            "installDirectlyFromGitHubRelease": true,
+            "version": "latest"
+        },
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": true,
+            "configureZshAsDefaultShell": true,
+            "installOhMyZsh": true,
+            "installOhMyZshConfig": true,
+            "upgradePackages": true,
+            "installSsl": true,
+            "username": "node",
+            "userUid": "1000",
+            "userGid": "1000"
+        }
+    },
+    "mounts": [
+        "source=claude-code-config,target=/home/node/.claude,type=volume",
+        "source=gh-cli-config,target=/home/node/.config/gh,type=volume"
+    ],
+    "containerEnv": {
+        "CLAUDE_CONFIG_DIR": "/home/node/.claude"
+    },
+    // Docusaurus dev server. --host 0.0.0.0 is required for the forward to work
+    // from inside a container, so run it as `npm start -- --host 0.0.0.0`.
+    "forwardPorts": [
+        3000
+    ],
+    "portsAttributes": {
+        "3000": {
+            "label": "Docusaurus",
+            "onAutoForward": "openPreview"
+        }
+    },
+    "postCreateCommand": {
+        "fixpermsforcode": "sudo chown -R 1000:1000 /workspaces/depman-docs 2>/dev/null || true",
+        "fixpermsforclaude": "sudo chown -R 1000:1000 /home/node/.config/claude 2>/dev/null || true",
+        "fixpermsforchcli": "sudo chown -R 1000:1000 /home/node/.config/gh 2>/dev/null || true",
+        "npmi": "npm ci || npm install"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "unifiedjs.vscode-mdx",
+                "dbaeumer.vscode-eslint",
+                "esbenp.prettier-vscode"
+            ]
+        }
+    },
+    "remoteUser": "node"
+}
