@@ -98,7 +98,7 @@ jobs:
           DEPMAN_COMMIT: ${{ needs.build.outputs.depman-commit }}
         run: >-
           npx --yes wrangler@4.131.2 pages deploy build
-          --project-name=depman-site
+          --project-name=depman-docs
           --branch=main
           --commit-hash="$GITHUB_SHA"
           --commit-message="site ${GITHUB_SHA::7}, depman ${DEPMAN_COMMIT::7} ($GITHUB_EVENT_NAME)"
