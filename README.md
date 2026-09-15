@@ -66,16 +66,53 @@ hand-written pages there. The landing page is `src/pages/index.md`.
 It runs on:
 
 - **pushes to `main`**
-- **daily at 06:17 UTC**, so a DepMan release appears within a day. GitHub disables scheduled
-  workflows in public repositories after 60 days without activity, and this repo rarely changes.
-  If releases stop appearing, check for a "scheduled workflow disabled" banner on the Actions tab
-  and re-enable it.
-- **manual dispatch** (Actions → Site → Run workflow), to publish straight after a release
+- **`workflow_dispatch` from depman** when a release tag is pushed (see below)
+- **manual dispatch** (Actions → Site → Run workflow). Use this to publish docs changes made in
+  depman between releases, or after a failed trigger from depman.
 - **pull requests**, build only. This catches a Docusaurus upgrade or transform bug before it
   reaches `main`.
 
-Nothing runs in, or is added to, the depman repository. Pull requests from forks don't receive
-secrets, so their build check fails at the token step.
+Nothing runs on a schedule. If a release doesn't appear, check the "Publish docs site" run in
+depman first. Pull requests from forks don't receive secrets, so their build check fails at the
+token step.
+
+### The trigger from depman
+
+depman's release checklist puts each `changelog/<module>/vX.Y.Z.md` in the tagged commit, and tags
+point at merge commits on `main`. So when a tag is pushed, depman's `main` already has the notes,
+and that's what this site checks out. depman runs one small workflow on those tags. It's on a
+GitHub-hosted runner, so it doesn't take a slot in depman's self-hosted pool:
+
+```yaml
+# cool-studio/depman: .github/workflows/docs-site.yml
+name: Publish docs site
+
+on:
+  push:
+    tags: ['v*', '*-client/v*']
+
+permissions: {}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.DOCS_SITE_DISPATCH_TOKEN }}
+        run: gh workflow run site.yml --repo cool-studio/depman-docs --ref main
+```
+
+`DOCS_SITE_DISPATCH_TOKEN` is a secret in **depman**, not here. depman's built-in `GITHUB_TOKEN`
+can't trigger workflows in another repository, so use either:
+
+- a fine-grained personal access token with access to `cool-studio/depman-docs` only and
+  **Actions: Read and write** and nothing else, or
+- a GitHub App installed on `cool-studio/depman-docs` with Actions: write, with its token created
+  in the job by `actions/create-github-app-token`.
+
+A personal access token expires, and an expired one is the likeliest reason releases stop
+appearing. When `api` and a client are tagged together, the site is triggered twice; its
+concurrency group queues the runs, which is harmless.
 
 ### Secrets
 

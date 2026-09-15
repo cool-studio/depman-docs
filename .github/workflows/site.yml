@@ -4,10 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
-  schedule:
-    # Daily, so a DepMan release shows up within a day without anyone acting.
-    - cron: '17 6 * * *'
-  # "Publish now", e.g. straight after a DepMan release.
+  # Dispatched by cool-studio/depman when a release tag is pushed, and by hand
+  # to publish depman docs changes between releases. See README.md.
   workflow_dispatch:
 
 permissions:
