@@ -1,4 +1,4 @@
-# depman-site
+# depman-docs
 
 The public documentation and changelog for DepMan, published at **https://docs.depman.io**.
 
@@ -59,9 +59,9 @@ hand-written pages there. The landing page is `src/pages/index.md`.
 
 1. Checks out depman read-only and shallow into `.depman/` using `DEPMAN_READ_TOKEN`.
 2. Runs `npm test`, `./scripts/pull-content.sh --from .depman`, and `npm run build`.
-3. On `main` only, runs `wrangler pages deploy` on the build to the Cloudflare Pages project
-   `depman-site`. The custom domain `docs.depman.io` is set up on that project in the Cloudflare
-   dashboard.
+3. On `main` only, runs `wrangler deploy`, which uploads the build to the Cloudflare Worker
+   `depman-docs`, configured in `wrangler.jsonc`. It's an assets-only Worker: no script, just the
+   static files.
 
 It runs on:
 
@@ -121,8 +121,24 @@ Set these as repository secrets. A missing one fails its job with a message nami
 | Secret | Used by | What it is |
 |---|---|---|
 | `DEPMAN_READ_TOKEN` | build | A fine-grained personal access token scoped to `cool-studio/depman` only, with **Contents: read-only** and nothing else. |
-| `CLOUDFLARE_API_TOKEN` | deploy | A Cloudflare API token with **Account → Cloudflare Pages → Edit**. |
-| `CLOUDFLARE_ACCOUNT_ID` | deploy | The Cloudflare account that owns the `depman-site` Pages project. |
+| `CLOUDFLARE_API_TOKEN` | deploy | A Cloudflare API token from the **Edit Cloudflare Workers** template, restricted to the one account. |
+| `CLOUDFLARE_ACCOUNT_ID` | deploy | The Cloudflare account that owns the `depman-docs` Worker. |
 
-The Pages project must already exist, as a Direct Upload project with production branch `main`.
-`wrangler pages deploy` won't create it in CI.
+### The Worker
+
+`wrangler.jsonc` is the Worker's configuration, and every deploy applies it. Change settings there,
+not in the dashboard:
+
+- `html_handling: drop-trailing-slash` matches Docusaurus's `trailingSlash: false`. `/changelog` serves
+  `changelog.html`, and `/changelog/` and `/changelog.html` redirect to it.
+- `not_found_handling: 404-page` serves Docusaurus's `404.html` with a 404 status.
+- **The custom domain is the exception.** `docs.depman.io` is attached in the dashboard (Worker →
+  Settings → Domains & Routes). `wrangler.jsonc` has no `routes` and sets `workers_dev: false`,
+  which is Cloudflare's documented way to leave dashboard-managed domains alone on deploy. It also
+  means the `*.workers.dev` address is turned off.
+
+To try the production build under the Workers runtime locally:
+
+```sh
+npm run build && npx wrangler dev
+```

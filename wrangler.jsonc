@@ -1,0 +1,15 @@
+// An assets-only Worker serving the Docusaurus build. There is no Worker script.
+// Deployed by .github/workflows/site.yml with `wrangler deploy`.
+{
+  "name": "depman-docs",
+  "compatibility_date": "2026-09-15",
+  "assets": {
+    "directory": "./build",
+    // Docusaurus builds with trailingSlash: false, so /foo is foo.html.
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  // docs.depman.io is attached to this Worker in the Cloudflare dashboard. With no
+  // routes here and workers.dev off, deploys leave that configuration alone.
+  "workers_dev": false
+}

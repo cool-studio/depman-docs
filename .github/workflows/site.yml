@@ -76,11 +76,14 @@ jobs:
           missing=0
           for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID; do
             if [ -z "${!name}" ]; then
-              echo "::error title=Missing secret $name::Add $name as a repository secret to deploy to Cloudflare Pages. See README.md."
+              echo "::error title=Missing secret $name::Add $name as a repository secret to deploy the depman-docs Worker. See README.md."
               missing=1
             fi
           done
           exit $missing
+
+      # For wrangler.jsonc. Before the download, because checkout cleans the workspace.
+      - uses: actions/checkout@v7
 
       - uses: actions/download-artifact@v8
         with:
@@ -91,14 +94,11 @@ jobs:
         with:
           node-version: 22
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy the depman-docs Worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           DEPMAN_COMMIT: ${{ needs.build.outputs.depman-commit }}
         run: >-
-          npx --yes wrangler@4.131.2 pages deploy build
-          --project-name=depman-docs
-          --branch=main
-          --commit-hash="$GITHUB_SHA"
-          --commit-message="site ${GITHUB_SHA::7}, depman ${DEPMAN_COMMIT::7} ($GITHUB_EVENT_NAME)"
+          npx --yes wrangler@4.131.2 deploy
+          --message="site ${GITHUB_SHA::7}, depman ${DEPMAN_COMMIT::7} ($GITHUB_EVENT_NAME)"
