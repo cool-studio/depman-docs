@@ -1,0 +1,16 @@
+# Dependencies
+/node_modules
+
+# Docusaurus
+/build
+/.docusaurus
+/.cache-loader
+
+# Fetched from cool-studio/depman at build time. Never commit these.
+/generated
+/.depman
+
+# Misc
+.DS_Store
+.env*
+npm-debug.log*
